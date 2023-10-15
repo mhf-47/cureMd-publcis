@@ -1,0 +1,131 @@
+using Microsoft.AspNetCore.Mvc; // Import the necessary namespaces for ASP.NET Core MVC.
+using Microsoft.Extensions.Configuration; // Import configuration services.
+using System.Data; // Import data-related classes.
+using System.Collections.Generic; // Import the generic list class.
+using WebApplication1; // Import your application's namespace.
+using System.Data.SqlClient; // Import SQL Server data access.
+using Microsoft.AspNetCore.Mvc.RazorPages; // Import Razor Pages related classes.
+using System.Xml.Linq; // Import XML handling classes.
+using static System.Net.Mime.MediaTypeNames; // Import MIME type-related classes.
+
+namespace WebApplication1.Controllers
+{
+    [ApiController] // Indicates that this class is an API controller.
+    [Route("api/[controller]")] // Defines the route for this controller.
+    public class StudentsController : ControllerBase // Defines an API controller for students.
+    {
+        private readonly string _connectionString; // Stores the database connection string.
+
+        public StudentsController(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection"); // Get the connection string from the configuration.
+        }
+
+        [HttpGet] // Handles HTTP GET requests.
+        public IActionResult GetAllStudents()
+        {
+            List<Student> students = new List<Student>(); // Create a list to store student data.
+            using (SqlConnection connection = new SqlConnection(_connectionString)) // Establish a connection to the database.
+            {
+                using (SqlCommand command = new SqlCommand("GetAllStudents", connection)) // Create a SQL command to call a stored procedure.
+                {
+                    command.CommandType = CommandType.StoredProcedure; // Set the command type to a stored procedure.
+                    connection.Open(); // Open the database connection.
+                    SqlDataReader reader = command.ExecuteReader(); // Execute the SQL command and get the result.
+                    while (reader.Read()) // Iterate through the result set.
+                    {
+                        Student stdnt = new Student(); // Create a Student object.
+                        stdnt.StudentID = (int)reader["StudentID"]; // Set properties based on the database result.
+                        stdnt.FirstName = reader["FirstName"].ToString();
+                        stdnt.LastName = reader["LastName"].ToString();
+                        stdnt.Age = (int)reader["Age"];
+                        stdnt.CourseID = (int)reader["CourseID"];
+                        students.Add(stdnt); // Add the Student to the list.
+                    }
+                }
+            }
+            return Ok(students); // Return a response with the list of students in the HTTP OK status.
+        }
+
+        [HttpGet("{id}")] // Handles HTTP GET requests with an "id" parameter in the route.
+        public IActionResult GetStudentById(int id)
+        {
+            Student student = new Student(); // Create a Student object.
+            using (SqlConnection connection = new SqlConnection(_connectionString)) // Establish a connection to the database.
+            {
+                using (SqlCommand command = new SqlCommand("GetStudentById", connection)) // Create a SQL command to call a stored procedure.
+                {
+                    command.CommandType = CommandType.StoredProcedure; // Set the command type to a stored procedure.
+                    command.Parameters.AddWithValue("@ID", id); // Add a parameter to the SQL command.
+                    connection.Open(); // Open the database connection.
+                    SqlDataReader reader = command.ExecuteReader(); // Execute the SQL command and get the result.
+                    if (reader.Read()) // Check if a result is found.
+                    {
+                        student.StudentID = (int)reader["StudentID"]; // Set properties based on the database result.
+                        student.FirstName = reader["FirstName"].ToString();
+                        student.LastName = reader["LastName"].ToString();
+                        student.Age = (int)reader["Age"];
+                        student.CourseID = (int)reader["CourseID"];
+                    }
+                }
+            }
+            return Ok(student); // Return a response with the student in the HTTP OK status.
+        }
+
+        [HttpPut] // Handles HTTP PUT requests.
+        public IActionResult AddStudent(Student student)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString)) // Establish a connection to the database.
+            {
+                using (SqlCommand command = new SqlCommand("AddStudent", connection)) // Create a SQL command to call a stored procedure.
+                {
+                    command.CommandType = CommandType.StoredProcedure; // Set the command type to a stored procedure.
+
+                    command.Parameters.AddWithValue("@FirstName", student.FirstName); // Add parameters to the SQL command.
+                    command.Parameters.AddWithValue("@LastName", student.LastName); // Add parameters to the SQL command.
+                    command.Parameters.AddWithValue("@Age", student.Age);
+                    command.Parameters.AddWithValue("@CourseID", student.CourseID);
+                    connection.Open(); // Open the database connection.
+                    command.ExecuteNonQuery(); // Execute the SQL command to add a student.
+                }
+            }
+            return Ok(); // Return an HTTP OK response.
+        }
+
+        [HttpPut("{id}")] // Handles HTTP PUT requests with an "id" parameter in the route.
+        public IActionResult UpdateStudent(int id, Student student)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString)) // Establish a connection to the database.
+            {
+                using (SqlCommand command = new SqlCommand("UpdateStudent", connection)) // Create a SQL command to call a stored procedure.
+                {
+                    command.CommandType = CommandType.StoredProcedure; // Set the command type to a stored procedure.
+                    command.Parameters.AddWithValue("@ID", student.StudentID);
+                    command.Parameters.AddWithValue("@FirstName", student.FirstName);
+                    command.Parameters.AddWithValue("@LastName", student.LastName);
+                    command.Parameters.AddWithValue("@Age", student.Age);
+                    command.Parameters.AddWithValue("@CourseID", student.CourseID);
+                    connection.Open(); // Open the database connection.
+                    command.ExecuteNonQuery(); // Execute the SQL command to update a student.
+                }
+            }
+            return Ok(student); // Return an HTTP OK response with the updated student data.
+        }
+
+        [HttpDelete("{id}")] // Handles HTTP DELETE requests with an "id" parameter in the route.
+        public IActionResult DeleteStudent(int id)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString)) // Establish a connection to the database.
+            {
+                using (SqlCommand command = new SqlCommand("DeleteStudent", connection)) // Create a SQL command to call a stored procedure.
+                {
+                    command.CommandType = CommandType.StoredProcedure; // Set the command type to a stored procedure.
+                    command.Parameters.AddWithValue("@ID", id); // Add a parameter to the SQL command.
+                    connection.Open(); // Open the database connection.
+                    command.ExecuteNonQuery(); // Execute the SQL command to delete a student.
+                }
+            }
+            return Ok(); // Return an HTTP OK response.
+        }
+    }
+}

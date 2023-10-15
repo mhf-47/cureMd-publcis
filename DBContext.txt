@@ -1,0 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace WebApplication1.Data
+{
+    public class IssueDBContext : DbContext
+    {
+        public IssueDBContext(DbContextOptions<IssueDBContext> options) : base(options)
+
+        { 
+        }
+        // Define your DbSet properties for the entities you want to work with in the database.
+        public DbSet<Student> Issues { get; set; }
+        
+    }
+}
